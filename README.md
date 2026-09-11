@@ -24,7 +24,6 @@ Documentation ownership:
 - `CHANGELOG.md` — release history
 - `docs/source/` — browsable technical documentation (MyST Markdown)
 - `docs/source/adr/` — architecture decision records (rendered with the docs)
-- `.agent/` — transient local agent coordination state (untracked, not documentation)
 
 ## Building documentation locally
 
@@ -41,33 +40,32 @@ Generated HTML lands in `docs/build/html/`.
 Standard local workflow uses the root `Makefile`, which wraps `docker compose`:
 
 ```
-./build.sh          # only needed if docker-compose.yml does not exist yet
-make clean          # remove containers, networks, and volumes
-make build          # build fresh images
-make up             # start services
-make test           # start db and run the Django test suite
+./build.sh              # only needed if docker-compose.yml does not exist yet
+make clean              # remove containers, networks, and volumes
+make build              # build fresh images
+make up                 # start services
+make test               # build, start PostgreSQL, migrate, and run the test suite
+make check              # Django system checks in the container
+make migrations-check   # detect migration drift
 ```
 
-For one-off commands, run them in the `test` container:
+For other one-off Django commands, run them in the `test` container:
 
 ```
-docker compose run --rm test python -m django check
-docker compose run --rm test python -m django makemigrations --check --dry-run
-docker compose run --rm test ./run_tests.py
+docker compose run --rm test python -m django <command>
 ```
 
 ## Dependency management (uv)
 
 The project uses `uv` with PEP 621 metadata in `pyproject.toml`.
 
-When dependencies change:
+When dependencies change, regenerate and commit `uv.lock` using the Make target:
 
 ```
-uv lock
+make lock
 ```
 
 Container builds install dependencies with the committed lockfile via `uv sync --locked`.
-When dependencies change, regenerate and commit `uv.lock` via `make lock`.
 
 ## Publish to PyPI
 
