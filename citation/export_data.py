@@ -98,6 +98,8 @@ class PublicationCSVExporter:
                     field = model._meta.get_field(attribute)
                 except FieldDoesNotExist:
                     return False
+                if field.many_to_many or field.one_to_many:
+                    return False
                 model = field.related_model
                 if model is None:
                     return False

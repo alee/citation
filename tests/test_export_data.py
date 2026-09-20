@@ -33,6 +33,13 @@ class PublicationCSVExporterTests(TestCase):
                 role=PublicationAuthors.RoleChoices.AUTHOR,
             )
 
+    def test_rejects_nested_many_to_many_attribute_paths(self):
+        self.assertTrue(PublicationCSVExporter.attribute_exists("platforms"))
+        self.assertFalse(PublicationCSVExporter.attribute_exists("platforms__name"))
+
+        with self.assertRaisesRegex(AttributeError, "platforms__name"):
+            PublicationCSVExporter(attributes=["platforms__name"])
+
     def test_write_and_stream_keep_each_publication_in_one_csv_row(self):
         attributes = [
             "id",
