@@ -910,6 +910,10 @@ class Publication(AbstractLogModel):
     zotero_key = models.CharField(max_length=64, null=True, unique=True, blank=True)
     url = models.URLField(blank=True)
     date_published_text = models.CharField(max_length=64, blank=True)
+    # derived from date_published_text on save, see _extract_year_published
+    year_published = models.PositiveSmallIntegerField(
+        null=True, blank=True, editable=False
+    )
     date_accessed = models.DateField(null=True, blank=True)
     # FIXME: remove unused Zotero metadata at some point since we are no longer importing from Zotero
     archive = models.CharField(max_length=255, blank=True)
@@ -1123,10 +1127,13 @@ class Publication(AbstractLogModel):
 
     YEAR_PUBLISHED_REGEX = re.compile(r"(?<!\d)\d{4}(?!\d)")
 
-    @property
-    def year_published(self):
+    def _extract_year_published(self):
         r = self.YEAR_PUBLISHED_REGEX.search(self.date_published_text)
-        return r.group(0) if r else None
+        return int(r.group(0)) if r else None
+
+    def save(self, *args, **kwargs):
+        self.year_published = self._extract_year_published()
+        super().save(*args, **kwargs)
 
     @property
     def container_title(self):

@@ -30,25 +30,19 @@ def filtered_publications(filter_criteria, require_year=False):
                 "creators__given_name", Value(" "), "creators__family_name"
             )
         ).filter(author_full_name=author_name)
-    publications = publications.distinct()
 
     start_year = _year(start_value) if start_value else None
     end_year = _year(end_value) if end_value else None
-    if start_year is None and end_year is None and not require_year:
-        return list(publications)
 
-    result = []
-    for publication in publications:
-        year = publication.year_published
-        if year is None:
-            continue
-        year = int(year)
-        if start_year is not None and year < start_year:
-            continue
-        if end_year is not None and year > end_year:
-            continue
-        result.append(publication)
-    return result
+    # year_published is a persisted column, so year bounds can be pushed to SQL
+    if start_year is not None:
+        publications = publications.filter(year_published__gte=start_year)
+    if end_year is not None:
+        publications = publications.filter(year_published__lte=end_year)
+    if require_year:
+        publications = publications.exclude(year_published__isnull=True)
+
+    return list(publications.distinct())
 
 
 def publication_ids_for_filters(filter_criteria):
