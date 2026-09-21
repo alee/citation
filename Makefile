@@ -16,7 +16,8 @@ clean:
 	$(COMPOSE) down --volumes --remove-orphans
 
 format: build
-	$(COMPOSE) run --rm test uv run ruff format .
+	$(COMPOSE) run --rm test uv run ruff format . \
+		--exclude "*/migrations/*.py"
 
 lock:
 	$(COMPOSE) run --rm test uv lock
