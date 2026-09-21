@@ -9,19 +9,26 @@ from citation.models import Author, Container, Publication, PublicationAuthors
 
 
 class PublicationCSVExporterTests(TestCase):
+    # commas are intentional: exercises CSV field quoting/escaping
+    PUBLICATION_TITLE = "Model, with comma"
+    CONTAINER_NAME = "Journal, with comma"
+    CONTAINER_ISSN = "1234-5678"
+    AUTHORS = (("Ada", "Zephyr"), ("Grace", "Alpha"))
+    EXPECTED_AUTHOR_NAMES = "Grace Alpha; Ada Zephyr"
+
     def setUp(self):
         user = User.objects.create_user(username="csv-export-user")
         container = Container.objects.create(
-            name="Journal, with comma",
-            issn="1234-5678",
+            name=self.CONTAINER_NAME,
+            issn=self.CONTAINER_ISSN,
         )
         publication = Publication.objects.create(
-            title="Model, with comma",
+            title=self.PUBLICATION_TITLE,
             date_published_text="2019",
             container=container,
             added_by=user,
         )
-        for given_name, family_name in (("Ada", "Zephyr"), ("Grace", "Alpha")):
+        for given_name, family_name in self.AUTHORS:
             author = Author.objects.create(
                 given_name=given_name,
                 family_name=family_name,
@@ -59,7 +66,7 @@ class PublicationCSVExporterTests(TestCase):
         self.assertEqual(written_rows[0], attributes)
         self.assertEqual(len(written_rows), 2)
         self.assertTrue(all(len(row) == len(attributes) for row in written_rows))
-        self.assertEqual(written_rows[1][1], "Model, with comma")
-        self.assertEqual(written_rows[1][2], "Grace Alpha; Ada Zephyr")
-        self.assertEqual(written_rows[1][3], "1234-5678")
-        self.assertEqual(written_rows[1][4], "Journal, with comma")
+        self.assertEqual(written_rows[1][1], self.PUBLICATION_TITLE)
+        self.assertEqual(written_rows[1][2], self.EXPECTED_AUTHOR_NAMES)
+        self.assertEqual(written_rows[1][3], self.CONTAINER_ISSN)
+        self.assertEqual(written_rows[1][4], self.CONTAINER_NAME)
